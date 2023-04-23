@@ -48,6 +48,8 @@ CACHES = {
 
 ## Installation:
 
+`pip install ~/dev/pluto-rt`
+
 - `pip install qr3` (or add it to your project dependencies)
 - Add `rt` to the list of installed apps in project settings.
 - To enable the internal API, add to your top-level urls.py:

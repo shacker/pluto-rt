@@ -4,14 +4,24 @@ version = "0.1.0"
 authors = [
   { name="Scot Hacker", email="shacker@birdhouse.org" },
 ]
-description = "A reusable Django app providing a kit for storing and displaying messages from a background processor into a web view."
+description = "A reusable Django app providing a kit for storing and displaying messages from a background processor into a web view in real time, as the processor works."
 readme = "README.md"
 requires-python = ">=3.10"
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
+dependencies = [
+    "qr3",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/shacker/pluto"
+
+
+[build-system]
+requires = ["hatchling", "qr3"]
+build-backend = "hatchling.build"
