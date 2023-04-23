@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Progress{% endblock %}
+
+{% block content %}
+
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header">
+            <h3>Queue progress: {{ queue_name }}</h3>
+          </div>
+          <div class="card-body">
+
+            <h4>
+            Live progress:
+            </h4>
+            <table class="table">
+              <tbody id="rt_messages"></tbody>
+              {# Real-time messages appended as rows via htmx as they're retrieved from queue #}
+              <div
+                hx-get="/rt_messages/{{ queue_name }}?count={{num_per_gulp}}"
+                hx-trigger="every {{interval_seconds}}s"
+                hx-swap="beforeend"
+                hx-target="#rt_messages"
+                focus-scroll:true
+              >
+              </div>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

@@ -11,20 +11,17 @@ worker is doing.
 
 This system solves that by using a library called [QR3](https://pypi.org/project/qr3/), which
 utilizes Redis as a message queuing service. Messages can be placed on the queue and their order is
-remembered automatically. As messages are retrieved from the queue, it automatically delivers the
-oldest ones first. Retrieved messages are automatically removed from the queue, so that the oldest
-ones are always the ones you want to see next.
-
+remembered. As messages are retrieved from the queue, it automatically delivers the
+oldest ones first.
 
 https://user-images.githubusercontent.com/102694/233860792-652f8790-6f31-4dd8-8c37-fc479171c576.mov
-
 
 The overall strategy is this:
 
 1. Invoke your background processor (worker) with a unique queue name
 1. The worker places messages onto the queue, associated with that name
 1. A private internal API retrieves and removes the oldest `n` messages from that queue
-1. Javascript polling from the web view appends the results of each gulp to a display table
+1. HTMX polling from the web view appends the results of each gulp to a display table
 
 
 ## Prerequisites
@@ -34,7 +31,7 @@ We assume you already have these installed and working
 - A running Django project
 - A running Redis server
 - A base project template called `base.html` (use a custom template if not - see below)
-- Your `base.html` pulls in extra javascript with `{% block extra_js %}{% endblock extra_js %}`
+- Your `base.html` includes HTMX
 - A runnning background processor such as django-q or django-celery
 - A standalone function that processes data and whose real-time output you want to display
 - A `KEY_PREFIX` is defined in in your project cache settings, e.g.

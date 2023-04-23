@@ -1,0 +1,7 @@
+{# Each display row in results table #}
+{% for item in items %}
+    <tr>
+        <td class="bg-{{item.status}}" width="5%"></td>
+        <td>{{item.msg}}</td>
+    </tr>
+{% endfor %}
