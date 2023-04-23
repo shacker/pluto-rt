@@ -15,6 +15,10 @@ remembered automatically. As messages are retrieved from the queue, it automatic
 oldest ones first. Retrieved messages are automatically removed from the queue, so that the oldest
 ones are always the ones you want to see next.
 
+
+https://user-images.githubusercontent.com/102694/233860792-652f8790-6f31-4dd8-8c37-fc479171c576.mov
+
+
 The overall strategy is this:
 
 1. Invoke your background processor (worker) with a unique queue name
