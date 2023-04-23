@@ -1,0 +1,128 @@
+Metadata-Version: 2.1
+Name: pluto-rt
+Version: 0.1.0
+Summary: A reusable Django app providing a kit for storing and displaying messages from a background processor into a web view.
+Author-email: Scot Hacker <shacker@birdhouse.org>
+Project-URL: Homepage, https://github.com/shacker/pluto
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# Pluto: Real-time web results for long-running processes
+
+Any time you have a need to trigger a long-running process from a web view,
+you run into Python's blocking nature. Nothing will be displayed until the
+process is complete, and you'll hit timeouts if you exceed the default timeout
+for your web application process.
+
+To solve the long-running aspect, we turn to background workers like django-q
+or django-celery. But then the user has no insight into what the background
+worker is doing.
+
+This system solves that by using a library called [QR3](https://pypi.org/project/qr3/), which
+utilizes Redis as a message queuing service. Messages can be placed on the queue and their order is
+remembered automatically. As messages are retrieved from the queue, it automatically delivers the
+oldest ones first. Retrieved messages are automatically removed from the queue, so that the oldest
+ones are always the ones you want to see next.
+
+The overall strategy is this:
+
+1. Invoke your background processor (worker) with a unique queue name
+1. The worker places messages onto the queue, associated with that name
+1. A private internal API retrieves and removes the oldest `n` messages from that queue
+1. Javascript polling from the web view appends the results of each gulp to a display table
+
+
+## Prerequisites
+
+We assume you already have these installed and working
+
+- A running Django project
+- A running Redis server
+- A base project template called `base.html` (use a custom template if not - see below)
+- Your `base.html` pulls in extra javascript with `{% block extra_js %}{% endblock extra_js %}`
+- A runnning background processor such as django-q or django-celery
+- A standalone function that processes data and whose real-time output you want to display
+- A `KEY_PREFIX` is defined in in your project cache settings, e.g.
+
+```
+CACHES = {
+    "default": {
+        ...
+        "BACKEND": "django_redis.cache.RedisCache",
+        "KEY_PREFIX": config.REDIS_PREFIX,  # or some fixed string for your project
+        ...
+    }
+}
+```
+
+## Installation:
+
+- `pip install qr3` (or add it to your project dependencies)
+- Add `rt` to the list of installed apps in project settings.
+- To enable the internal API, add to your top-level urls.py:
+
+```
+path("rt_messages/", include("rt.urls")),
+```
+
+## Usage
+There are two views you'll need to control: the view that kicks off the process
+and passes tasks to the background worker, and the view that consumes the results.
+
+### Calling the process
+
+First: Work to be done should be defined in a single function, which will be passed
+to the background worker. See `proj_1/someapp/operations.py` in this repo
+for example.
+
+The calling view should generate a descriptive queue name, made relatively unique
+with an ID (upload ID works well for this). It should invoke your background
+processor with that function and the queue name as arguments, then redirect to the
+display view. For example:
+
+```
+def post(self, request):
+    upload_id = request.POST.get("upload_id")
+    queue_name = f"demo_run_{upload_id}"
+    async_task(
+        sample_ops_function,
+        queue_name=queue_name,
+    )
+    return redirect(reverse("rt_demo", kwargs={"queue_name": queue_name}))
+```
+
+### Displaying results
+
+The display view receives the queue name as an argument, and polls the
+internal API with that queue name plus arguments for controlling
+how many items per "gulp" to grab, and how long to wait between gulps.
+
+The display view should be handled something like this:
+
+```
+context = {
+    "queue_name": queue_name,
+    "num_per_gulp": 3,
+    "interval_seconds": 2
+}
+return render(request, "rt_results.html", context)
+```
+
+This assumes you want to use the bundled rendering template, which assumes
+your site is using Bootstrap. To customize its appearance or behavior, copy the
+bundled template into a location of your choice and specify it in the
+`render` call above.
+
+The three context items are required:
+
+- You must pass the generated queue name on to the template.
+- You must tell the template how many items to pull from the queue per "gulp" (cycle)
+- You must tell the template how long to wait between gulps.
+
+Each use case is different, so modify the numeric args to suit.
+
+

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Progress{% endblock %}
+
+{% block content %}
+
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header">
+            <h3>Queue progress: {{ queue_name }}</h3>
+          </div>
+          <div class="card-body">
+            {# Real-time messages appended here as they're retrieved from redis #}
+            <h4>
+            Live progress:
+            </h4>
+            <table class="table table-condensed">
+              <tbody id="rt_upload_messages"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div> <!-- /.row -->
+
+  </div>
+
+{% endblock content %}
+
+
+{% block extra_js %}
+  <script>
+    // Retrieve unread messages from redis queue at intervals, and display in named div.
+    // queue_name is set by the caller and used everywhere.
+    // num_per_gulp passed in from the view - how many items to grab per cycle?
+    // interval_seconds passed in from the view - how long to wait between gulps?
+
+    // TODO: Can we make this stop polling after a "finished" marker is passed in?
+
+    var getRTMessages = function() {
+      $.get(
+        '/rt_messages/{{ queue_name }}?count={{num_per_gulp}}',
+      ).done(function (results) {
+        results.forEach(appendMsg);
+        function appendMsg(item, index) {
+          var newrow = '<tr><td class="bg-status" width="5%"></td><td>msg</td></tr>'.replace("status", item.status).replace("msg", item.msg);
+          $("#rt_upload_messages").append(newrow);
+        }
+      });
+    }
+
+    getRTMessages();
+    // We pass in the interval in seconds but setInterval works in microseconds
+    setInterval(getRTMessages, {{interval_seconds}} * 1000);
+  </script>
+{% endblock extra_js %}
