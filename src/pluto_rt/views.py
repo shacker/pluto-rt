@@ -46,13 +46,13 @@ def rt_messages(request: HttpRequest, queue_name: str) -> HttpResponse:
     qr3.qr provides a direct interface onto redis queues, and provides the following methods
     common to Python queue data structures:
 
-        bqueue = Queue('foobar')
-        bqueue.push(someobj)
-        bqueue.clear()
-        bqueue.elements()
-        bqueue.peek()
-        bqueue.pop()
-        bqueue.push()
+        mqueue = Queue('foobar')
+        mqueue.push(someobj)
+        mqueue.clear()
+        mqueue.elements()
+        mqueue.peek()
+        mqueue.pop()
+        mqueue.push()
 
     Args:
         queue_name: Required queue name
@@ -63,22 +63,21 @@ def rt_messages(request: HttpRequest, queue_name: str) -> HttpResponse:
         Last `n` messages in the queue, generally as a list of dictionaries, in JSON.
     """
 
-    count = request.GET.get("count") if request.GET.get("count") else 5
-    count = int(count)
-    bqueue = get_rt_queue_handle(queue_name)
+    count = request.GET.get("count")
+    count = int(count) if count else 5
+    mqueue = get_rt_queue_handle(queue_name)
 
-    # Send a 286 response to stop htmx polling when the queue is empty
-    if not bqueue.elements():
-        response = HttpResponse()
-        response.status_code = 286
-        return response
-
-    else:
-        # Pull `count` oldest elements off the queue and into a list for templating.
+    if mqueue.elements():
         items = list()
         for _ in range(count):
-            temp_obj = bqueue.pop()
+            temp_obj = mqueue.pop()
             if temp_obj:
                 items.append(temp_obj)
 
         return render(request, "pluto_rt/rows.html", {"items": items})
+
+    else:
+        # Send a 286 response to stop htmx polling when the queue is empty
+        response = HttpResponse()
+        response.status_code = 286
+        return response
