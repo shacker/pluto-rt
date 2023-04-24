@@ -21,11 +21,10 @@
               <tbody id="rt_messages"></tbody>
               {# Real-time messages appended as rows via htmx as they're retrieved from queue #}
               <div
-                hx-get="/rt_messages/{{ queue_name }}?count={{num_per_gulp}}"
-                hx-trigger="every {{interval_seconds}}s"
-                hx-swap="beforeend"
+                hx-get="/rt_messages/{{ queue_name }}?count={{ num_per_gulp }}"
+                hx-trigger="every {{ interval_seconds }}s"
+                hx-swap="beforeend focus-scroll:true"
                 hx-target="#rt_messages"
-                focus-scroll:true
               >
               </div>
             </table>
